@@ -47,8 +47,10 @@ for image in images:
         minSize=(30, 30),
 
     )
-    if(faces is None):
-        cascPath = "haarcascade_frontalface_default.xml"
+    # print(faces)
+    if len(faces) == 0:
+        
+        cascPath = "haarcascade_profileface.xml"
 
         # Create the haar cascade
         faceCascade = cv2.CascadeClassifier(cascPath)
@@ -65,26 +67,46 @@ for image in images:
             minSize=(30, 30),
 
         )
-        if(faces is None):
-                    cascPath = "haarcascade_frontalface_default.xml"
+        if len(faces) ==0:
 
-                    # Create the haar cascade
-                    faceCascade = cv2.CascadeClassifier(cascPath)
+            cascPath = "haarcascade_profileface.xml"
 
-                    # Read the image
-                    # image = cv2.imread(imagePath)
-                    imageFliped = cv2.flip(imagePath)
-                    gray = cv2.cvtColor(imageFliped, cv2.COLOR_BGR2GRAY)
+            # Create the haar cascade
+            faceCascade = cv2.CascadeClassifier(cascPath)
 
-                    # Detect faces in the image
-                    faces = faceCascade.detectMultiScale(
-                        gray,
-                        scaleFactor=1.3,
-                        minNeighbors=5,
-                        minSize=(30, 30),
+            # Read the image
+            # image = cv2.imread(imagePath)
+            imageFliped = cv2.flip(imagePath,0)
+            gray = cv2.cvtColor(imageFliped, cv2.COLOR_BGR2GRAY)
 
-                    )
+            # Detect faces in the image
+            faces = faceCascade.detectMultiScale(
+                gray,
+                scaleFactor=1.3,
+                minNeighbors=5,
+                minSize=(30, 30),
 
+            )
+
+            if len(faces) == 0:
+                cascPath = "haarcascade_frontalface_default.xml"
+
+                # Create the haar cascade
+                faceCascade = cv2.CascadeClassifier(cascPath)
+
+                # Read the image
+                # image = cv2.imread(imagePath)
+                imageFliped = cv2.flip(imagePath,0)
+                gray = cv2.cvtColor(imageFliped, cv2.COLOR_BGR2GRAY)
+
+                # Detect faces in the image
+                faces = faceCascade.detectMultiScale(
+                    gray,
+                    scaleFactor=1.3,
+                    minNeighbors=5,
+                    minSize=(30, 30),
+
+                )
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
         cv2.rectangle(image, (x, y), (x+w, y+h), (0, 255, 0), 2)
