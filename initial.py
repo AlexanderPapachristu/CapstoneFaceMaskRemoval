@@ -158,12 +158,12 @@ def detect_Face(image):
                     minNeighbors=5,
                     minSize=(30, 30),
 
-                )
+                )          
     return faces, gray
 
 
 # logging.basicConfig(level=logging.DEBUG)
-# images = load_images_from_folder("images")
+images = load_images_from_folder("images")
 # for image in images:
 #     imagePath = image
     # faces, gray = detect_Face(image)\
@@ -172,8 +172,12 @@ color_dict={0:(0,0,255),1:(0,255,0)}
 size = 4
 webcam = cv2.VideoCapture(0) 
 classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-while True:
-    (rval, image) = webcam.read()
+# while True:
+for image in images:
+    imagePath = image
+    faces, gray = detect_Face(image)
+    # (rval, image) = webcam.read()
+    
     mini = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size))
     im=cv2.flip(image,1,1)
 
@@ -212,7 +216,13 @@ while True:
         cv2.rectangle(image,(x,y-40),(x+w,y),color_dict[label],-1)
         cv2.putText(image, labels_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
     cv2.imshow("Image", image)
-    key = cv2.waitKey(10)
+    # cropped_image = facial_Feature(image, gray, x, y, w, h)
+    # cv2.imshow("Image", cropped_image)
+    
+    cv2.waitKey(0)
+    #key = cv2.waitKey(10)
+    
+
 
 
 
