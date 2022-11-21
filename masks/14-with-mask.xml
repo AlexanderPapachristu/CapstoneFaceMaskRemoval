@@ -1,0 +1,26 @@
+<annotation>
+	<folder>with_mask</folder>
+	<filename>14-with-mask.jpg</filename>
+	<path>C:\Users\zacca\OneDrive\Desktop\Year 4\Capstone\Code\CapstoneFaceMaskRemoval\train\with_mask\14-with-mask.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>184</width>
+		<height>274</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>mask</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>54</xmin>
+			<ymin>105</ymin>
+			<xmax>150</xmax>
+			<ymax>148</ymax>
+		</bndbox>
+	</object>
+</annotation>
