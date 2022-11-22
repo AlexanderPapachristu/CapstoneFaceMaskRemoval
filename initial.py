@@ -54,7 +54,7 @@ def load_images_from_folder(path):
 # finds straight lines from the image 
 def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
-    edges = cv2.Canny(blurred_gray, 50, 100) # apply canny edge detection on image
+    edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges)  
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=75, maxLineGap=20) # detects all straight lines from the canny edges (returns array of lines)
     final_Lines = []
