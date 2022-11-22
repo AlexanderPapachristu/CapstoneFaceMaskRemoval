@@ -18,8 +18,6 @@ model=load_model("./model2-010.model")
 def facial_Feature(image, gray, x, y, w, h):
 
     eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
-    nose_cascade = cv2.CascadeClassifier('haarcascade_mcs_nose.xml')
-    mouth_cascade = cv2.CascadeClassifier('haarcascade_mcs_mouth.xml')
     
     roi_gray = gray[y:y+h, x:x+w]
     roi_color = image[y:y+h, x:x+w]
@@ -55,8 +53,7 @@ def load_images_from_folder(path):
 
 # finds straight lines from the image 
 def line_Getter(img, gray, eye_avg):
-    blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some images
-    # cv2.imshow("Burred Image", blurred_gray)
+    blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 50, 100) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges)  
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=75, maxLineGap=20) # detects all straight lines from the canny edges (returns array of lines)
