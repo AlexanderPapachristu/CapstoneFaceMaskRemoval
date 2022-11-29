@@ -25,7 +25,7 @@ def facial_Feature(image, gray, x, y, w, h):
     eye_y = []
     
     for (ex,ey,ew,eh) in eyes:
-        cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),2)
+        cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),2) # Drawing eye detection label rectangles
         eye_y.append(ey + (eh/2) )
 
     return roi_color, roi_gray, eye_y
@@ -55,14 +55,14 @@ def load_images_from_folder(path):
 def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
-    # cv2.imshow("Edged Image", edges)  
+    cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=75, maxLineGap=20) # detects all straight lines from the canny edges (returns array of lines)
     final_Lines = []
     if len(lines) != 0: 
         for line in lines: 
             x1, y1, x2, y2 = line[0]
             if(y1 >= eye_avg and y2 >= eye_avg): # only show lines under eyes
-                # cv2.line(img, (x1,y1), (x2, y2), (255,0,0),3) 
+                cv2.line(img, (x1,y1), (x2, y2), (255,0,0),3) # Drawing all houglines
                 final_Lines.append(line[0])
     return final_Lines
 
@@ -82,7 +82,7 @@ def mask_Creator(lines,img):
         if(max(y1, y2) <= y_Max):
             y_Max = max(y1,y2)
 
-    cv2.line(img, (x_Min,y_Max), (x_Max, y_Max), (0,0,255),3)
+    #cv2.line(img, (x_Min,y_Max), (x_Max, y_Max), (0,0,255),3) # Drawing main houghline
 
     mask_img = np.zeros(img.shape, dtype="uint8")
     w, h, c  = img.shape
@@ -91,7 +91,7 @@ def mask_Creator(lines,img):
     print(x_Max)
     print(x_Min)
     print(y_Max)
-    cv2.rectangle(mask_img, (x_Min, y_Max), (x_Max,h), (255,255,255), -1)
+    cv2.rectangle(mask_img, (x_Min, y_Max), (x_Max,h), (0,0,255), -1) # Drawing mask rectangle
     
     cv2.waitKey(0)
     
@@ -107,7 +107,7 @@ classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 for image in images:
     imagePath = image
-   
+    cv2.imshow("Input",imagePath)
     mini = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
 
     # detect MultiScale / faces
@@ -132,6 +132,7 @@ for image in images:
 
 
         if labels_dict[label] == "mask":
+            cv2.imshow("face", image)
             cropped_image, cropped_gray, eye_y = facial_Feature(image, gray, x, y, w, h)
 
             eye_avg = (sum(eye_y)/len(eye_y))+ 15 # get average of eyes and look just below
@@ -141,11 +142,11 @@ for image in images:
             cv2.imshow("Image", cropped_image)
             cv2.imshow("Mask", mask_img)
             # res = cv2.bitwise_and(cropped_image,cropped_image,mask = mask_img)
-            dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
+            dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
             cv2.imshow("Combined", dst)
 
             cv2.waitKey(0)
         #else:
             
             # Mask not detected
-            #ctypes.windll.user32.MessageBoxW(0, "Mask not Detected", "No Masks", 1)
+            # ctypes.windll.user32.MessageBoxW(0, "Mask not Detected", "No Masks", 1)
