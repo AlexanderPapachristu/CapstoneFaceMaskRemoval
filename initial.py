@@ -9,7 +9,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from keras.models import load_model
 import skimage
-model=load_model("./model2-010.model")
+model=load_model("./model2-009.model")
 
 #Uses pre-defined haar cascades to detect facial features
 #detectMultiScale detects different object sizes and labels them
