@@ -13,16 +13,19 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from torch.autograd import Variable
-
+import cuda
 from model import _netlocalD,_netG
 import utils
+# device = torch.device("cuda")
+# torch.cuda.init()
+# # print(torch.cuda.is_available())
 epochs=100
 Batch_Size=64
 lr=0.0002
 beta1=0.5
 over=4
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataroot',  default='dataset/train', help='path to dataset')
+parser.add_argument('--dataroot',  default='trainingset/train', help='path to dataset')
 opt = parser.parse_args()
 try:
     os.makedirs("result/train/cropped")
@@ -41,11 +44,11 @@ assert dataset
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=Batch_Size,
                                          shuffle=True, num_workers=2)
 
-ngpu = int(opt.ngpu)
+# ngpu = int(opt.ngpu)
 
 wtl2 = 0.999
 
-# custom weights initialization called on netG and netD
+# custom weights initialization called on netG and netDcc
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
