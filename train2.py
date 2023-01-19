@@ -13,7 +13,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from torch.autograd import Variable
-import cuda
+#import cuda
 from model import _netlocalD,_netG
 import utils
 # device = torch.device("cuda")

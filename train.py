@@ -10,6 +10,7 @@ from sklearn.metrics import f1_score
 from sklearn.utils import shuffle
 import imutils
 import numpy as np
+from tensorflow import keras
 
 model =Sequential([
     Conv2D(100, (3,3), activation='relu', input_shape=(150, 150, 3)),
