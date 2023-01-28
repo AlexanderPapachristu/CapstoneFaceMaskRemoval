@@ -58,7 +58,7 @@ def load_images_from_folder(path):
 def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
-    # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
+    cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
     lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=75, maxLineGap=20) # detects all straight lines from the canny edges (returns array of lines)
     final_Lines = []
     if len(lines) != 0: 
@@ -94,10 +94,9 @@ def mask_Creator(lines,img):
     print(x_Max)
     print(x_Min)
     print(y_Max)
-    cv2.rectangle(mask_img, (x_Min, y_Max - 15), (x_Max,h), (255,255,255), -1) # Drawing mask rectangle
+    cv2.rectangle(mask_img, (x_Min, y_Max), (x_Max,h), (255,255,255), -1) # Drawing mask rectangle
     
-    # 
-    # cv2.waitKey(0)
+    cv2.waitKey(0)
     
     return mask_img
     
@@ -111,7 +110,7 @@ classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 for image in images:
     imagePath = image
-    # cv2.imshow("Input",imagePath)
+    cv2.imshow("Input",imagePath)
     mini = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
 
     # detect MultiScale / faces
@@ -129,11 +128,11 @@ for image in images:
         # result=model.predict(reshaped)
         # label=np.argmax(result,axis=1)[0]
 
-       
+        # cv2.rectangle(image,(x,y),(x+w,y+h),color_dict[label],2)
         # cv2.rectangle(image,(x,y-40),(x+w,y),color_dict[label],-1)
         # cv2.putText(image, labels_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
-        # cv2.rectangle(image,(x,y),(x+w,y+h),(0,0,0),2)
-        cv2.imshow("Input", image)
+        cv2.imshow("face", image)
+        print("test")
         cropped_image, cropped_gray, eye_y = facial_Feature(image, gray, x, y, w, h)
 
         eye_avg = (sum(eye_y)/len(eye_y))+ 15 # get average of eyes and look just below
@@ -143,42 +142,41 @@ for image in images:
         cv2.imshow("Image", cropped_image)
         cv2.imshow("Mask", mask_img)
         # res = cv2.bitwise_and(cropped_image,cropped_image,mask = mask_img)
-        # dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
-        # cv2.imshow("Combined", dst)
+        dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
+        cv2.imshow("Combined", dst)
         # NEW  CODE FOR OUTPUT GENERATION
-        if mask_img is not None:
-            assert cropped_image.shape == mask_img.shape
+        assert cropped_image.shape == mask_img.shape
 
-            h, w, _ = cropped_image.shape
-            grid = 8
-            cropped_image = cropped_image[:h//grid*grid, :w//grid*grid, :]
-            mask_img = mask_img[:h//grid*grid, :w//grid*grid, :]
-            print('Shape of cropped_image: {}'.format(cropped_image.shape))
+        h, w, _ = cropped_image.shape
+        grid = 8
+        cropped_image = cropped_image[:h//grid*grid, :w//grid*grid, :]
+        mask_img = mask_img[:h//grid*grid, :w//grid*grid, :]
+        print('Shape of cropped_image: {}'.format(cropped_image.shape))
 
-            cropped_image = np.expand_dims(cropped_image, 0)
-            mask_img = np.expand_dims(mask_img, 0)
-            input_image = np.concatenate([cropped_image, mask_img], axis=2)
-            FLAGS = ng.Config('inpaint.yml')
-            model = InpaintCAModel()
-            sess_config = tf.ConfigProto()
-            sess_config.gpu_options.allow_growth = True
-            with tf.Session(config=sess_config) as sess:
-                input_image = tf.constant(input_image, dtype=tf.float32)
-                output = model.build_server_graph(FLAGS, input_image)
-                output = (output + 1.) * 127.5
-                output = tf.reverse(output, [-1])
-                output = tf.saturate_cast(output, tf.uint8)
-                # load pretrained model
-                vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-                assign_ops = []
-                for var in vars_list:
-                    vname = var.name
-                    from_name = vname
-                    var_value = tf.contrib.framework.load_variable('C:/Users/zacca/OneDrive/Desktop/Year 4/Capstone/Code/CapstoneFaceMaskRemoval/model_logs/release_celeba_hq_256_deepfill_v2', from_name)
-                    assign_ops.append(tf.assign(var, var_value))
-                sess.run(assign_ops)
-                print('Model loaded.')
-                result = sess.run(output)
+        cropped_image = np.expand_dims(cropped_image, 0)
+        mask_img = np.expand_dims(mask_img, 0)
+        input_image = np.concatenate([cropped_image, mask_img], axis=2)
+        FLAGS = ng.Config('inpaint.yml')
+        model = InpaintCAModel()
+        sess_config = tf.ConfigProto()
+        sess_config.gpu_options.allow_growth = True
+        with tf.Session(config=sess_config) as sess:
+            input_image = tf.constant(input_image, dtype=tf.float32)
+            output = model.build_server_graph(FLAGS, input_image)
+            output = (output + 1.) * 127.5
+            output = tf.reverse(output, [-1])
+            output = tf.saturate_cast(output, tf.uint8)
+            # load pretrained model
+            vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+            assign_ops = []
+            for var in vars_list:
+                vname = var.name
+                from_name = vname
+                var_value = tf.contrib.framework.load_variable('C:/Users/adris/Desktop/CapstoneFaceMaskRemoval/model_logs/release_celeba_hq_256_deepfill_v2', from_name)
+                assign_ops.append(tf.assign(var, var_value))
+            sess.run(assign_ops)
+            print('Model loaded.')
+            result = sess.run(output)
             cv2.imshow("Output", result[0][:, :, ::-1])
         cv2.waitKey(0)
 
