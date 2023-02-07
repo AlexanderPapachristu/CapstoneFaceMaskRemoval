@@ -93,7 +93,7 @@ def mask_Creator(lines,img):
 
     mask_img = np.zeros(img.shape, dtype="uint8")
     h = img.shape[0]
-    print("HEIGHT,  ",h)
+    # print("HEIGHT,  ",h)
     # print(img.shape)
     # print(mask_img.shape)
     # print(x_Max)
@@ -105,7 +105,43 @@ def mask_Creator(lines,img):
     # cv2.waitKey(0)
     
     return mask_img
-    
+
+def output_Creator(cropped_image, mask_img):
+    assert cropped_image.shape == mask_img.shape
+
+    h, w, _ = cropped_image.shape
+    grid = 8
+    cropped_image = cropped_image[:h//grid*grid, :w//grid*grid, :]
+    mask_img = mask_img[:h//grid*grid, :w//grid*grid, :]
+    print('Shape of cropped_image: {}'.format(cropped_image.shape))
+    print('Shape of Mask_image: {}'.format(mask_img.shape))
+
+    cropped_image = np.expand_dims(cropped_image, 0)
+    mask_img = np.expand_dims(mask_img, 0)
+    input_image = np.concatenate([cropped_image, mask_img], axis=2)
+    print('Shape of Input_image: {}'.format(input_image.shape))
+    FLAGS = ng.Config('inpaint.yml')
+    model = InpaintCAModel()
+    sess_config = tf.ConfigProto()
+    # sess_config.gpu_options.allow_growth = True
+    with tf.Session(config=sess_config) as sess:
+        input_image = tf.constant(input_image, dtype=tf.float32)
+        output = model.build_server_graph(FLAGS, input_image)
+        output = (output + 1.) * 127.5
+        output = tf.reverse(output, [-1])
+        output = tf.saturate_cast(output, tf.uint8)
+        # load pretrained model
+        vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
+        assign_ops = []
+        for var in vars_list:
+            vname = var.name
+            from_name = vname
+            var_value = tf.contrib.framework.load_variable('./model_logs/old', from_name)
+            assign_ops.append(tf.assign(var, var_value))
+        sess.run(assign_ops)
+        print('Model loaded.')
+        result = sess.run(output)
+    cv2.imshow("Output", result[0][:, :, ::-1])    
 
 # MAIN FUNCTION, LORD FORGIVE ME FOR WHAT I'M ABOUT TO CODE
 images = load_images_from_folder("photo_test")
@@ -152,41 +188,9 @@ cv2.imshow("Mask", mask_img)
 # res = cv2.bitwise_and(cropped_image,cropped_image,mask = mask_img)
 # dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
 # cv2.imshow("Combined", dst)
-# NEW  CODE FOR OUTPUT GENERATION
+# # NEW  CODE FOR OUTPUT GENERATION
 if mask_img is not None:
-    assert cropped_image.shape == mask_img.shape
-
-    h, w, _ = cropped_image.shape
-    grid = 8
-    cropped_image = cropped_image[:h//grid*grid, :w//grid*grid, :]
-    mask_img = mask_img[:h//grid*grid, :w//grid*grid, :]
-    print('Shape of cropped_image: {}'.format(cropped_image.shape))
-
-    cropped_image = np.expand_dims(cropped_image, 0)
-    mask_img = np.expand_dims(mask_img, 0)
-    input_image = np.concatenate([cropped_image, mask_img], axis=2)
-    FLAGS = ng.Config('inpaint.yml')
-    model = InpaintCAModel()
-    sess_config = tf.ConfigProto()
-    sess_config.gpu_options.allow_growth = True
-    with tf.Session(config=sess_config) as sess:
-        input_image = tf.constant(input_image, dtype=tf.float32)
-        output = model.build_server_graph(FLAGS, input_image)
-        output = (output + 1.) * 127.5
-        output = tf.reverse(output, [-1])
-        output = tf.saturate_cast(output, tf.uint8)
-        # load pretrained model
-        vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-        assign_ops = []
-        for var in vars_list:
-            vname = var.name
-            from_name = vname
-            var_value = tf.contrib.framework.load_variable('C:/Users/zacca/OneDrive/Desktop/Year 4/Capstone/Code/CapstoneFaceMaskRemoval/model_logs/release_celeba_hq_256_deepfill_v2', from_name)
-            assign_ops.append(tf.assign(var, var_value))
-        sess.run(assign_ops)
-        print('Model loaded.')
-        result = sess.run(output)
-    cv2.imshow("Output", result[0][:, :, ::-1])
+    output_Creator(cropped_image, mask_img)
 else:
     print("NO MASK")
 cv2.waitKey(0)
