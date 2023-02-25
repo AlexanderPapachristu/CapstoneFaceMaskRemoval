@@ -60,7 +60,7 @@ def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=15, maxLineGap=5) # detects all straight lines from the canny edges (returns array of lines)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=5, maxLineGap=5) # detects all straight lines from the canny edges (returns array of lines)
     w = img.shape[1]
     final_Lines = []
     if len(lines) != 0: 
@@ -112,10 +112,10 @@ def mask_Creator(lines,img):
     # print(x_Max)
     # print(x_Min)
     # print(y_Max)
-    if y_Min +int(h/10) >= h:
-        y_Min = h - int(h/10)
-    if y_Max + int(h/10) >= h:
-        y_Max = h - int(h/10)
+    # if y_Min +int(h/10) >= h:
+    #     y_Min = h - int(h/10)
+    # if y_Max + int(h/10) >= h:
+    #     y_Max = h - int(h/10)
     cv2.rectangle(mask_img, (x_Min, y_Max  ), (x_Max,y_Min-5 ), (255,255,255), -1) # Drawing mask rectangle
     # cv2.waitKey(0)
     
@@ -260,7 +260,7 @@ image = images[0]
 print(image.shape)
 # cv2.imshow("Input",imagePath)
 inter = cv2.INTER_AREA
-height = 400
+height = 256
 dim = None
 (h, w) = image.shape[:2]
 r = height / float(h)
@@ -304,8 +304,8 @@ mask_img=mask_Creator(final_Lines, cropped_image)
 cv2.imshow("Mask", mask_img)
 cv2.imwrite("OUTPUT/mask.png", mask_img)
 # res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
-# dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
-# cv2.imshow("Combined", dst)
+dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
+cv2.imshow("Combined", dst)
 # # NEW  CODE FOR OUTPUT GENERATION
 if mask_img is not None:
     output_Creator(cropped_image, mask_img)
