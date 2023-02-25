@@ -8,6 +8,8 @@ model2-007.model/
 model2-008.model/
 model2-009.model/
 model2-010.model/
+pretrained/
 *.pb
 *.data-00000-of-00001
 *.index
+*.
