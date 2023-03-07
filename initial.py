@@ -60,7 +60,7 @@ def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=5, maxLineGap=5) # detects all straight lines from the canny edges (returns array of lines)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=10, maxLineGap=3) # detects all straight lines from the canny edges (returns array of lines)
     w = img.shape[1]
     final_Lines = []
     if len(lines) != 0: 
@@ -98,9 +98,10 @@ def mask_Creator(lines,img):
             slope =  abs(y2-y1) / abs(x2-x1)
         else:
             slope = 0
-        if(max(x1, x2) >= x_Max and (y2 < y_Max_temp and y1 < y_Max_temp ) and slope > 3):
+        # print(slope)
+        if(max(x1, x2) >= x_Max and (y2 < y_Max_temp and y1 < y_Max_temp ) and slope > 1):
             x_Max = max(x1, x2)
-        if(min(x1, x2) <= x_Min and (y2 < y_Max_temp and y1 < y_Max_temp ) and slope > 3):
+        if(min(x1, x2) <= x_Min and (y2 < y_Max_temp and y1 < y_Max_temp ) and slope > 1):
             x_Min = min(x1, x2)
     # cv2.line(img, (x_Min,y_Max), (x_Max, y_Max), (0,0,255),3) # Drawing main houghline
 
@@ -248,6 +249,12 @@ def output_Creator(cropped_image, mask_img):
     #     result = sess.run(output)
     # cv2.imshow("Output", result[0][:, :, ::-1])    
 
+def reject_outliers(data, m=6.):
+    d = np.abs(data - np.median(data))
+    mdev = np.median(d)
+    s = d / (mdev if mdev else 1.)
+    return data[s < m].tolist()
+
 # MAIN FUNCTION, LORD FORGIVE ME FOR WHAT I'M ABOUT TO CODE
 images = load_images_from_folder("photo_test")
 labels_dict={0:'without mask',1:'mask'}
@@ -290,6 +297,10 @@ gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 cv2.imshow("Input", image)
 cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
 if len(eye_y) > 0:
+    
+    # Remove outliner eyes
+    eye_y = np.array(eye_y)
+    eye_y = reject_outliers(eye_y)
     print(f"EYE Y: {eye_y}")
     eye_avg = (sum(eye_y)/len(eye_y)) + 10 # get average of eyes and look just below
     
