@@ -8,12 +8,9 @@ import numpy as np
 from PIL import Image
 from keras.models import load_model
 import skimage
-# from inpaint_model import InpaintCAModel
-# import neuralgym as ng
 import tensorflow as tf
 import torchvision.transforms as T
 import torch
-# model=load_model('./model2-005.model')
 
 #Uses pre-defined haar cascades to detect facial features
 #detectMultiScale detects different object sizes and labels them
