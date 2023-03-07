@@ -162,7 +162,7 @@ def output_Creator(cropped_image, mask_img):
 
     # # set up network
    
-    generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth")['G']
+    generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth", map_location= torch.device('cpu'))['G']
 
 
     from model.networks import Generator
@@ -171,14 +171,13 @@ def output_Creator(cropped_image, mask_img):
     use_cuda_if_available = True
     device = torch.device('cuda' if torch.cuda.is_available()
                           and use_cuda_if_available else 'cpu')
-
     # # # set up network
     generator = Generator(cnum_in=5, cnum=48, return_flow=False).to(device)
 
 
 
 
-    generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth")['G']
+    generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth", map_location= torch.device('cpu'))['G']
     generator.load_state_dict(generator_state_dict, strict=True)
     img = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2RGB)
     im_pil = Image.fromarray(img)
@@ -304,7 +303,7 @@ mask_img=mask_Creator(final_Lines, cropped_image)
 cv2.imshow("Mask", mask_img)
 cv2.imwrite("OUTPUT/mask.png", mask_img)
 # res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
-dst = cv2.addWeighted(cropped_image,0.5,mask_img,1,0)
+dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
 cv2.imshow("Combined", dst)
 # # NEW  CODE FOR OUTPUT GENERATION
 if mask_img is not None:
