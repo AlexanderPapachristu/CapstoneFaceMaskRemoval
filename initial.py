@@ -25,13 +25,16 @@ def facial_Feature(image, gray):
     
     roi_gray = gray
     roi_color = image
-    eyes = eye_cascade.detectMultiScale(roi_gray, 1.2, 3)
+    eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 5)
     eye_y = []
-    
+    if len(eyes) == 0:
+        eyes_cascade = cv2.CascadeClassifier('haarcascade_eye_tree_eyeglasses.xml')
+        eyes = eyes_cascade.detectMultiScale(roi_gray)
     for (ex,ey,ew,eh) in eyes:
-        # cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),2) # Drawing eye detection label rectangles
-        eye_y.append(ey + (eh/2) )
+            # cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),2) # Drawing eye detection label rectangles
+            eye_y.append(ey + (eh/2) )
 
+       
     return roi_color, roi_gray, eye_y
 
 #imports images and resizes them to a standard size
@@ -60,7 +63,7 @@ def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=10, maxLineGap=3) # detects all straight lines from the canny edges (returns array of lines)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=5, maxLineGap=3) # detects all straight lines from the canny edges (returns array of lines)
     w = img.shape[1]
     final_Lines = []
     if len(lines) != 0: 
@@ -117,7 +120,7 @@ def mask_Creator(lines,img):
     #     y_Min = h - int(h/10)
     # if y_Max + int(h/10) >= h:
     #     y_Max = h - int(h/10)
-    cv2.rectangle(mask_img, (x_Min, y_Max  ), (x_Max,y_Min-5 ), (255,255,255), -1) # Drawing mask rectangle
+    cv2.rectangle(mask_img, (x_Min, y_Max  ), (x_Max,y_Min-19 ), (255,255,255), -1) # Drawing mask rectangle
     # cv2.waitKey(0)
     
     return mask_img
@@ -220,7 +223,7 @@ def output_Creator(cropped_image, mask_img):
     img_out = img_out.to(device='cpu', dtype=torch.uint8)
     img_out = Image.fromarray(img_out.numpy())
     img_out.show()
-    img_out.save("OUTPUT/case1_out_test.png")
+    # img_out.save("OUTPUT/case1_out_test.png")
 
     # assert cropped_image.shape == mask_img.shape
 
@@ -272,7 +275,7 @@ dim = None
 r = height / float(h)
 dim = (int(w * r), height)
 image = cv2.resize(image, dim, interpolation = inter)
-cv2.imwrite("OUTPUT/image.png",image)
+# cv2.imwrite("OUTPUT/image.png",image)
 # image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
 print(image.shape)
 # detect MultiScale / faces
@@ -306,13 +309,13 @@ if len(eye_y) > 0:
     
 else:
     print("NO EYES")
-    eye_avg = int( cropped_image.shape[0]/2)-20
+    eye_avg = int( cropped_image.shape[0]/2) + 10
 final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg)
 cv2.imshow("TESR", cropped_image)
 mask_img=mask_Creator(final_Lines, cropped_image)
 # cv2.imshow("Image", cropped_image)
 cv2.imshow("Mask", mask_img)
-cv2.imwrite("OUTPUT/mask.png", mask_img)
+# cv2.imwrite("OUTPUT/mask.png", mask_img)
 # res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
 dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
 cv2.imshow("Combined", dst)
