@@ -10,7 +10,4 @@ This Project will allow a user to insert an input image of a subject wearing a f
 
 **Before Running**
 
-pip install tensorflow
-pip install opencv-python
-pip install sklearn
-pip install imutils
+pip install -r requirements.txt
