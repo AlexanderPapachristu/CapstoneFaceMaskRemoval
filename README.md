@@ -11,3 +11,5 @@ This Project will allow a user to insert an input image of a subject wearing a f
 **Before Running**
 
 pip install -r requirements.txt
+
+Download fine-tuned weights: [CelebA-HQ](https://drive.google.com/u/0/uc?id=17oJ1dJ9O3hkl2pnl8l2PtNVf2WhSDtB7&export=download) (for `networks.py`)
