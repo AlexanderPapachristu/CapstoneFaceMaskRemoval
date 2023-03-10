@@ -8,12 +8,9 @@ import numpy as np
 from PIL import Image
 from keras.models import load_model
 import skimage
-# from inpaint_model import InpaintCAModel
-# import neuralgym as ng
 import tensorflow as tf
 import torchvision.transforms as T
 import torch
-# model=load_model('./model2-005.model')
 
 #Uses pre-defined haar cascades to detect facial features
 #detectMultiScale detects different object sizes and labels them
@@ -27,11 +24,18 @@ def facial_Feature(image, gray):
     roi_color = image
     eyes = eye_cascade.detectMultiScale(roi_gray, 1.3, 5)
     eye_y = []
-    if len(eyes) == 0:
-        eyes_cascade = cv2.CascadeClassifier('haarcascade_eye_tree_eyeglasses.xml')
-        eyes = eyes_cascade.detectMultiScale(roi_gray)
+
+    #***********************************#
+    # Need for eyeglasses detection but #
+    #      currently not working        #
+    #***********************************#
+
+    # if len(eyes) == 0:
+    #     eyes_cascade = cv2.CascadeClassifier('haarcascade_eye_tree_eyeglasses.xml')
+    #     eyes = eyes_cascade.detectMultiScale(roi_gray)
+
+
     for (ex,ey,ew,eh) in eyes:
-            # cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,0,255),2) # Drawing eye detection label rectangles
             eye_y.append(ey + (eh/2) )
 
        
@@ -44,14 +48,7 @@ def load_images_from_folder(path):
     images = []
     
     for item in os.listdir(path):
-        # inter = cv2.INTER_AREA
         img = cv2.imread(os.path.join(path,item))
-        # height = 800
-        # dim = None
-        # (h, w) = img.shape[:2]
-        # r = height / float(h)
-        # dim = (int(w * r), height)
-        # img = cv2.resize(img, dim, interpolation = inter)
        
         if img is not None:
             images.append(img)
@@ -63,14 +60,15 @@ def line_Getter(img, gray, eye_avg):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 25, minLineLength=5, maxLineGap=3) # detects all straight lines from the canny edges (returns array of lines)
+
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 32, minLineLength=9, maxLineGap=2) # detects all straight lines from the canny edges (returns array of lines)
+
     w = img.shape[1]
     final_Lines = []
     if len(lines) != 0: 
         for line in lines: 
             x1, y1, x2, y2 = line[0]
             if(y1 >= eye_avg and y2 >= eye_avg  and x1 > 0 + 50 and x2 > 0 + 50  and x1 < w - 50 and x2 < w - 50 ): # only show lines under eyes
-                # cv2.line(img, (x1,y1), (x2, y2), (255,0,0),3) # Drawing all houglines
                 final_Lines.append(line[0])
     return final_Lines
 
@@ -106,64 +104,14 @@ def mask_Creator(lines,img):
             x_Max = max(x1, x2)
         if(min(x1, x2) <= x_Min and (y2 < y_Max_temp and y1 < y_Max_temp ) and slope > 1):
             x_Min = min(x1, x2)
-    # cv2.line(img, (x_Min,y_Max), (x_Max, y_Max), (0,0,255),3) # Drawing main houghline
 
     mask_img = np.zeros(img.shape, dtype="uint8")
     h = img.shape[0]
-    # print("HEIGHT,  ",h)
-    # print(img.shape)
-    # print(mask_img.shape)
-    # print(x_Max)
-    # print(x_Min)
-    # print(y_Max)
-    # if y_Min +int(h/10) >= h:
-    #     y_Min = h - int(h/10)
-    # if y_Max + int(h/10) >= h:
-    #     y_Max = h - int(h/10)
     cv2.rectangle(mask_img, (x_Min, y_Max  ), (x_Max,y_Min-19 ), (255,255,255), -1) # Drawing mask rectangle
-    # cv2.waitKey(0)
     
     return mask_img
 
 def output_Creator(cropped_image, mask_img):
-    # assert cropped_image.shape == mask_img.shape
-
-    # h, w, _ = cropped_image.shape
-    # grid = 8
-    # cropped_image = cropped_image[:h//grid*grid, :w//grid*grid, :]
-    # mask_img = mask_img[:h//grid*grid, :w//grid*grid, :]
-    # print('Shape of cropped_image: {}'.format(cropped_image.shape))
-    # print('Shape of Mask_image: {}'.format(mask_img.shape))
-
-    # cropped_image = np.expand_dims(cropped_image, 0)
-    # mask_img = np.expand_dims(mask_img, 0)
-    # input_image = np.concatenate([cropped_image, mask_img], axis=2)
-    # print('Shape of Input_image: {}'.format(input_image.shape))
-    # FLAGS = ng.Config('inpaint.yml')
-    # model = InpaintCAModel()
-    # sess_config = tf.ConfigProto()
-    # # sess_config.gpu_options.allow_growth = True
-    # with tf.Session(config=sess_config) as sess:
-    #     input_image = tf.constant(input_image, dtype=tf.float32)
-    #     output = model.build_server_graph(FLAGS, input_image)
-    #     output = (output + 1.) * 127.5
-    #     output = tf.reverse(output, [-1])
-    #     output = tf.saturate_cast(output, tf.uint8)
-    #     # load pretrained model
-    #     vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-    #     assign_ops = []
-    #     for var in vars_list:
-    #         vname = var.name
-    #         from_name = vname
-    #         var_value = tf.contrib.framework.load_variable('./model_logs/old', from_name)
-    #         assign_ops.append(tf.assign(var, var_value))
-    #     sess.run(assign_ops)
-    #     print('Model loaded.')
-    #     result = sess.run(output)
-    # cv2.imshow("Output", result[0][:, :, ::-1])
-    # device = torch.device('cuda' if torch.cuda.is_available()
-    #                       and use_cuda_if_available else 'cpu')
-
     # # set up network
    
     generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth", map_location= torch.device('cpu'))['G']
@@ -177,9 +125,6 @@ def output_Creator(cropped_image, mask_img):
                           and use_cuda_if_available else 'cpu')
     # # # set up network
     generator = Generator(cnum_in=5, cnum=48, return_flow=False).to(device)
-
-
-
 
     generator_state_dict = torch.load("pretrained/states_pt_celebahq.pth", map_location= torch.device('cpu'))['G']
     generator.load_state_dict(generator_state_dict, strict=True)
@@ -223,34 +168,6 @@ def output_Creator(cropped_image, mask_img):
     img_out = img_out.to(device='cpu', dtype=torch.uint8)
     img_out = Image.fromarray(img_out.numpy())
     img_out.show()
-    # img_out.save("OUTPUT/case1_out_test.png")
-
-    # assert cropped_image.shape == mask_img.shape
-
-
-    # print('Shape of Input_image: {}'.format(input_image.shape))
-    # FLAGS = ng.Config('inpaint.yml')
-    # model = InpaintCAModel()
-    # sess_config = tf.ConfigProto()
-    # # sess_config.gpu_options.allow_growth = True
-    # with tf.Session(config=sess_config) as sess:
-    #     input_image = tf.constant(input_image, dtype=tf.float32)
-    #     output = model.build_server_graph(FLAGS, input_image)
-    #     output = (output + 1.) * 127.5
-    #     output = tf.reverse(output, [-1])
-    #     output = tf.saturate_cast(output, tf.uint8)
-    #     # load pretrained model
-    #     vars_list = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES)
-    #     assign_ops = []
-    #     for var in vars_list:
-    #         vname = var.name
-    #         from_name = vname
-    #         var_value = tf.contrib.framework.load_variable('./model_logs/old', from_name)
-    #         assign_ops.append(tf.assign(var, var_value))
-    #     sess.run(assign_ops)
-    #     print('Model loaded.')
-    #     result = sess.run(output)
-    # cv2.imshow("Output", result[0][:, :, ::-1])    
 
 def reject_outliers(data, m=6.):
     d = np.abs(data - np.median(data))
@@ -275,6 +192,9 @@ dim = None
 r = height / float(h)
 dim = (int(w * r), height)
 image = cv2.resize(image, dim, interpolation = inter)
+
+# image = cv2.resize(image, (512,512), interpolation = inter)
+
 # cv2.imwrite("OUTPUT/image.png",image)
 # image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
 print(image.shape)
@@ -282,21 +202,6 @@ print(image.shape)
 # faces = classifier.detectMultiScale(mini)
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-# Draw a rectangle around the faces
-# if len(faces):
-
-# face_img = image[y:y+h, x:x+w]
-# resized=cv2.resize(face_img,(150,150))
-# normalized=resized/255.0
-# reshaped=np.reshape(normalized,(1,150,150,3))
-# reshaped = np.vstack([reshaped])
-# result=model.predict(reshaped)
-# label=np.argmax(result,axis=1)[0]
-
-
-# cv2.rectangle(image,(x,y-40),(x+w,y),color_dict[label],-1)
-# cv2.putText(image, labels_dict[label], (x, y-10),cv2.FONT_HERSHEY_SIMPLEX,0.8,(255,255,255),2)
-# cv2.rectangle(image,(x,y),(x+w,y+h),(0,0,0),2)
 cv2.imshow("Input", image)
 cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
 if len(eye_y) > 0:
@@ -305,7 +210,7 @@ if len(eye_y) > 0:
     eye_y = np.array(eye_y)
     eye_y = reject_outliers(eye_y)
     print(f"EYE Y: {eye_y}")
-    eye_avg = (sum(eye_y)/len(eye_y)) + 10 # get average of eyes and look just below
+    eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
     
 else:
     print("NO EYES")
@@ -326,17 +231,3 @@ else:
     print("NO MASK")
 cv2.waitKey(0)
        
-# else:
-#     print("NO FACE FOUND")
-
-    # if labels_dict[label] == "mask":
-
-    #else:
-        
-        # Mask not detected
-        # ctypes.windll.user32.MessageBoxW(0, "Mask not Detected", "No Masks", 1)
-        # cv2.waitKey(0)
-    #else:
-        
-        # Mask not detected
-        # ctypes.windll.user32.MessageBoxW(0, "Mask not Detected", "No Masks", 1)   
