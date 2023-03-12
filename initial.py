@@ -12,6 +12,12 @@ import tensorflow as tf
 import torchvision.transforms as T
 import torch
 
+import tkinter as tk
+import tk_tools
+from tkinter import filedialog
+from tkinter.filedialog import askopenfile
+from PIL import Image, ImageTk
+
 #Uses pre-defined haar cascades to detect facial features
 #detectMultiScale detects different object sizes and labels them
 #Region of interest functionality for gray and color spaces
@@ -176,6 +182,26 @@ def reject_outliers(data, m=6.):
     return data[s < m].tolist()
 
 # MAIN FUNCTION, LORD FORGIVE ME FOR WHAT I'M ABOUT TO CODE
+
+window = tk.Tk()
+window.geometry("640x360")
+
+image_prompt = tk.Label(text = "Please select an image")
+image_prompt.grid(row=1,column=1)
+image_prompt.pack
+
+b1 = tk.Button(window, text='Upload File', width=20,command = lambda:upload_file())
+b1.grid(row=2,column=1) 
+
+def upload_file():
+    global img
+    filename = filedialog.askopenfilename(filetypes=[("Image file", ".jpg .png")])
+    img = ImageTk.PhotoImage(file=filename)
+    b2 = tk.Button(window, image=img)
+    b2.grid(row=3,column=1)
+
+window.mainloop()
+
 images = load_images_from_folder("photo_test")
 labels_dict={0:'without mask',1:'mask'}
 color_dict={0:(0,0,255),1:(0,255,0)}
