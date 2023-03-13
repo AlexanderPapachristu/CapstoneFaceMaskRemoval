@@ -191,22 +191,27 @@ image_prompt.grid(row=1,column=1)
 image_prompt.pack
 
 b1 = tk.Button(window, text='Upload File', width=20,command = lambda:upload_file())
-b1.grid(row=2,column=1) 
+b1.grid(row=2,column=1)
+globalimage=[]
 
 def upload_file():
-    global img
+    global tkImage
     filename = filedialog.askopenfilename(filetypes=[("Image file", ".jpg .png")])
-    img = ImageTk.PhotoImage(file=filename)
-    b2 = tk.Button(window, image=img)
+    tkImage = ImageTk.PhotoImage(file=filename)
+
+    img = cv2.imread(filename)
+    globalimage.append(img)
+
+    b2 = tk.Button(window, image=tkImage)
     b2.grid(row=3,column=1)
 
 window.mainloop()
 
-images = load_images_from_folder("photo_test")
+images = globalimage
 labels_dict={0:'without mask',1:'mask'}
 color_dict={0:(0,0,255),1:(0,255,0)}
 size = 4
-classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+#classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 image = images[0]
 print(image.shape)
@@ -256,4 +261,3 @@ if mask_img is not None:
 else:
     print("NO MASK")
 cv2.waitKey(0)
-       
