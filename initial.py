@@ -12,10 +12,12 @@ import tensorflow as tf
 import torchvision.transforms as T
 import torch
 
+
 import tkinter as tk
 import tk_tools
 from tkinter import filedialog
 from tkinter.filedialog import askopenfile
+from tkinter import *
 from PIL import Image, ImageTk
 
 #Uses pre-defined haar cascades to detect facial features
@@ -173,7 +175,9 @@ def output_Creator(cropped_image, mask_img):
     img_out = ((image_inpainted[0].permute(1, 2, 0) + 1)*127.5)
     img_out = img_out.to(device='cpu', dtype=torch.uint8)
     img_out = Image.fromarray(img_out.numpy())
-    img_out.show()
+    #img_out.show()
+    
+    return img_out
 
 def reject_outliers(data, m=6.):
     d = np.abs(data - np.median(data))
@@ -184,80 +188,120 @@ def reject_outliers(data, m=6.):
 # MAIN FUNCTION, LORD FORGIVE ME FOR WHAT I'M ABOUT TO CODE
 
 window = tk.Tk()
-window.geometry("640x360")
+
+window.geometry("1280x900")
 
 image_prompt = tk.Label(text = "Please select an image")
-image_prompt.grid(row=1,column=1)
-image_prompt.pack
+#image_prompt.grid(row=1,column=1)
+image_prompt.pack()
 
 b1 = tk.Button(window, text='Upload File', width=20,command = lambda:upload_file())
-b1.grid(row=2,column=1)
+#b1.grid(row=2,column=1)
+b1.pack()
 globalimage=[]
+
+b3=tk.Button(window, text="Recreate image", width=20,command = lambda:output_file())
+b3.pack()
+
 
 def upload_file():
     global tkImage
-    filename = filedialog.askopenfilename(filetypes=[("Image file", ".jpg .png")])
-    tkImage = ImageTk.PhotoImage(file=filename)
+    global b2
+    global globalimage
 
+    filename = filedialog.askopenfilename(filetypes=[("Image file", ".jpg .png")])
+
+    image=Image.open(filename)
+    img=image.resize((450, 350))
+    tkImage = ImageTk.PhotoImage(img)
+    
     img = cv2.imread(filename)
     globalimage.append(img)
+  
+    b2 = tk.Button(window, image=tkImage, anchor="center")
+    #b2.grid(row=3,column=1)
+    b2.pack()
 
-    b2 = tk.Button(window, image=tkImage)
-    b2.grid(row=3,column=1)
+def output_file():
+
+    global b4
+
+    images = globalimage
+    labels_dict={0:'without mask',1:'mask'}
+    color_dict={0:(0,0,255),1:(0,255,0)}
+    size = 4
+    #classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+    image = images[0]
+    print(image.shape)
+    # cv2.imshow("Input",imagePath)
+    inter = cv2.INTER_AREA
+    height = 256
+    dim = None
+    (h, w) = image.shape[:2]
+    r = height / float(h)
+    dim = (int(w * r), height)
+    image = cv2.resize(image, dim, interpolation = inter)
+
+    # image = cv2.resize(image, (512,512), interpolation = inter)
+
+    # cv2.imwrite("OUTPUT/image.png",image)
+    # image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
+    print(image.shape)
+    # detect MultiScale / faces
+    # faces = classifier.detectMultiScale(mini)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    #cv2.imshow("Input", image)
+    cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
+    if len(eye_y) > 0:
+        
+        # Remove outliner eyes
+        eye_y = np.array(eye_y)
+        eye_y = reject_outliers(eye_y)
+        print(f"EYE Y: {eye_y}")
+        eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
+        
+    else:
+        print("NO EYES")
+        eye_avg = int( cropped_image.shape[0]/2) + 10
+    final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg)
+    #cv2.imshow("TESR", cropped_image)
+    mask_img=mask_Creator(final_Lines, cropped_image)
+    # cv2.imshow("Image", cropped_image)
+    #cv2.imshow("Mask", mask_img)
+    # cv2.imwrite("OUTPUT/mask.png", mask_img)
+    # res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
+    dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
+    #cv2.imshow("Combined", dst)
+    # # NEW  CODE FOR OUTPUT GENERATION
+    # if mask_img is not None:
+    #     output_Creator(cropped_image, mask_img)
+    # else:
+    #     print("NO MASK")
+    cv2.waitKey(0)
+
+    global tkImage2
+
+    image2=(output_Creator(cropped_image, mask_img))
+    img2=image2.resize((450, 350))
+    tkImage2 = ImageTk.PhotoImage(img2)
+                                  
+    b4 = tk.Button(window, image=tkImage2, anchor="center")
+    #b2.grid(row=3,column=1)
+    b4.pack()
+
+    b5 = tk.Button(window, text='Upload File', width=20,command = lambda:reset())
+
+
+def reset():
+    b2.after(0, b2.destroy())
+    b4.after(0, b4.destroy())
+
+    globalimage.clear()
+
+b5 = tk.Button(window,height=1,width=10, text="Clear",command=reset)
+b5.pack()
+
 
 window.mainloop()
-
-images = globalimage
-labels_dict={0:'without mask',1:'mask'}
-color_dict={0:(0,0,255),1:(0,255,0)}
-size = 4
-#classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-
-image = images[0]
-print(image.shape)
-# cv2.imshow("Input",imagePath)
-inter = cv2.INTER_AREA
-height = 256
-dim = None
-(h, w) = image.shape[:2]
-r = height / float(h)
-dim = (int(w * r), height)
-image = cv2.resize(image, dim, interpolation = inter)
-
-# image = cv2.resize(image, (512,512), interpolation = inter)
-
-# cv2.imwrite("OUTPUT/image.png",image)
-# image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
-print(image.shape)
-# detect MultiScale / faces
-# faces = classifier.detectMultiScale(mini)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-cv2.imshow("Input", image)
-cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
-if len(eye_y) > 0:
-    
-    # Remove outliner eyes
-    eye_y = np.array(eye_y)
-    eye_y = reject_outliers(eye_y)
-    print(f"EYE Y: {eye_y}")
-    eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
-    
-else:
-    print("NO EYES")
-    eye_avg = int( cropped_image.shape[0]/2) + 10
-final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg)
-cv2.imshow("TESR", cropped_image)
-mask_img=mask_Creator(final_Lines, cropped_image)
-# cv2.imshow("Image", cropped_image)
-cv2.imshow("Mask", mask_img)
-# cv2.imwrite("OUTPUT/mask.png", mask_img)
-# res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
-dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
-cv2.imshow("Combined", dst)
-# # NEW  CODE FOR OUTPUT GENERATION
-if mask_img is not None:
-    output_Creator(cropped_image, mask_img)
-else:
-    print("NO MASK")
-cv2.waitKey(0)
