@@ -13,7 +13,7 @@ For Windows 10 <br/>
 Download Anaconda <br />
 https://www.anaconda.com/products/individual#windows
 
-###Next, 
+### Next, 
 <br />
 Create an environment in anaconda with python 3.7 using the following code and enter the environment
 <br />`conda create -n FaceMaskRemoval python==3.7` <br />
