@@ -9,7 +9,7 @@ face with a face mask on.
 This Project will allow a user to insert an input image of a subject wearing a face mask and output an image with and AI generated face where the face mask used to be.
 
 ### Before Running
-<br />For Windows 10 <br/>
+For Windows 10 <br/>
 Download Anaconda <br />
 https://www.anaconda.com/products/individual#windows
 
