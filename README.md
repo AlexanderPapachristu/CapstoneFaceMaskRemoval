@@ -8,10 +8,17 @@ face with a face mask on.
 
 This Project will allow a user to insert an input image of a subject wearing a face mask and output an image with and AI generated face where the face mask used to be.
 
+`Before Running`
+For Windows 10 
+Download Anaconda
+https://www.anaconda.com/products/individual#windows
+
+Download and install the latest CUDA toolkit
+https://developer.nvidia.com/cuda-downloads
+
 Create an environment in anaconda with python 3.7 using the following code and enter the environment
 `conda create -n FaceMaskRemoval python==3.7`
 `conda activate FaceMaskRemoval`
-`Before Running`
 Once inside the environment run 
 `pip install -r requirements.txt`
 
@@ -28,7 +35,7 @@ Here are some sample images
 ![image](https://user-images.githubusercontent.com/55794234/229315856-2bf397ad-6af6-4075-af23-802ac7afb3dc.png)
 ![image](https://user-images.githubusercontent.com/55794234/229315859-b2f962e4-999b-454e-b734-bfb86f98e896.png)
 ![image](https://user-images.githubusercontent.com/55794234/229315863-29794a48-b0a5-4064-b873-6e9ad255eb0f.png)
-![image](https://user-images.githubusercontent.com/55794234/229315870-3fab6210-df8a-4af2-be63-3b2de55ec705.png)
+
 
 
 
