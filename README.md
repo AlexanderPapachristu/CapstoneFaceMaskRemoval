@@ -22,7 +22,7 @@ Once the download is complete put those folders in the CapstoneFaceMaskRemoval f
 
 Then run initial.py with `python initial.py`
 
-Click on the upload file and choose the picture you would like to remove the facemask from and hit Recreate image. A sample of 10 images should appear and you will be left to choose the output you think is best. If you wish to select another file to upload, first hit the clear button and then upload another file.  
+Click on the upload file and choose the picture you would like to remove the facemask from and hit Recreate image. A sample of 10 images will appear and you will be left to choose the output you think is best. If you wish to select another file to upload, first hit the clear button and then upload another file.  
 
 Here are some sample images 
 ![image](https://user-images.githubusercontent.com/55794234/229315856-2bf397ad-6af6-4075-af23-802ac7afb3dc.png)
