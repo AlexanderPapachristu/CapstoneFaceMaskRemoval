@@ -13,9 +13,6 @@ For Windows 10
 Download Anaconda
 https://www.anaconda.com/products/individual#windows
 
-Download and install the latest CUDA toolkit
-https://developer.nvidia.com/cuda-downloads
-
 Create an environment in anaconda with python 3.7 using the following code and enter the environment
 `conda create -n FaceMaskRemoval python==3.7`
 `conda activate FaceMaskRemoval`
