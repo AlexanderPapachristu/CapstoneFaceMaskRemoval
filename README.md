@@ -8,18 +8,18 @@ face with a face mask on.
 
 This Project will allow a user to insert an input image of a subject wearing a face mask and output an image with and AI generated face where the face mask used to be.
 
-`Before Running`
-For Windows 10 
+### Before Running
+<br />For Windows 10 
 Download Anaconda
 https://www.anaconda.com/products/individual#windows
 
 Create an environment in anaconda with python 3.7 using the following code and enter the environment
-`conda create -n FaceMaskRemoval python==3.7`
-`conda activate FaceMaskRemoval`
+<br />`conda create -n FaceMaskRemoval python==3.7` <br />
+`conda activate FaceMaskRemoval` <br />
 Once inside the environment run 
 `pip install -r requirements.txt`
 
-Once the requirements are installed download the training set that our model is based off of in the following link 
+Once the requirements are installed, download the pretrained model in the following link
 fine-tuned weights: [CelebA-HQ](https://drive.google.com/u/0/uc?id=17oJ1dJ9O3hkl2pnl8l2PtNVf2WhSDtB7&export=download) (for `networks.py`) (This file will go into the pretrained folder)
 
 Once the download is complete put those folders in the CapstoneFaceMaskRemoval folder
