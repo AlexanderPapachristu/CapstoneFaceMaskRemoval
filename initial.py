@@ -5,12 +5,20 @@ import logging
 import sys
 import ctypes
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageTk
 from keras.models import load_model
 import skimage
 import tensorflow as tf
 import torchvision.transforms as T
 import torch
+
+
+import tkinter as tk
+import tk_tools
+from tkinter import filedialog
+from tkinter.filedialog import askopenfile
+from tkinter import *
+from PIL import Image, ImageTk
 
 #Uses pre-defined haar cascades to detect facial features
 #detectMultiScale detects different object sizes and labels them
@@ -56,12 +64,12 @@ def load_images_from_folder(path):
     return images
 
 # finds straight lines from the image 
-def line_Getter(img, gray, eye_avg):
+def line_Getter(img, gray, eye_avg, threshold, minLine, maxGap):
     blurred_gray = cv2.GaussianBlur(gray, (5,5),0) # add a blur to ignore background of some image
     edges = cv2.Canny(blurred_gray, 26, 115) # apply canny edge detection on image
     # cv2.imshow("Edged Image", edges) # Drawing canny edge lines 
 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 32, minLineLength=9, maxLineGap=2) # detects all straight lines from the canny edges (returns array of lines)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, threshold, minLineLength=minLine, maxLineGap=maxGap) # detects all straight lines from the canny edges (returns array of lines)
 
     w = img.shape[1]
     final_Lines = []
@@ -167,7 +175,9 @@ def output_Creator(cropped_image, mask_img):
     img_out = ((image_inpainted[0].permute(1, 2, 0) + 1)*127.5)
     img_out = img_out.to(device='cpu', dtype=torch.uint8)
     img_out = Image.fromarray(img_out.numpy())
-    img_out.show()
+    #img_out.show()
+    
+    return img_out
 
 def reject_outliers(data, m=6.):
     d = np.abs(data - np.median(data))
@@ -176,58 +186,147 @@ def reject_outliers(data, m=6.):
     return data[s < m].tolist()
 
 # MAIN FUNCTION, LORD FORGIVE ME FOR WHAT I'M ABOUT TO CODE
-images = load_images_from_folder("photo_test")
-labels_dict={0:'without mask',1:'mask'}
-color_dict={0:(0,0,255),1:(0,255,0)}
-size = 4
-classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-image = images[0]
-print(image.shape)
-# cv2.imshow("Input",imagePath)
-inter = cv2.INTER_AREA
-height = 256
-dim = None
-(h, w) = image.shape[:2]
-r = height / float(h)
-dim = (int(w * r), height)
-image = cv2.resize(image, dim, interpolation = inter)
+window = tk.Tk()
 
-# image = cv2.resize(image, (512,512), interpolation = inter)
+window.geometry("1280x900")
 
-# cv2.imwrite("OUTPUT/image.png",image)
-# image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
-print(image.shape)
-# detect MultiScale / faces
-# faces = classifier.detectMultiScale(mini)
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+image_prompt = tk.Label(text = "Please select an image")
+#image_prompt.grid(row=1,column=0)
+image_prompt.grid(column=0, row=0)
 
-cv2.imshow("Input", image)
-cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
-if len(eye_y) > 0:
+b1 = tk.Button(window, text='Upload File', width=20,command = lambda:upload_file())
+#b1.grid(row=2,column=0)
+b1.grid(column=0, row=2)
+globalimage=[]
+
+b3=tk.Button(window, text="Recreate image", width=20,command = lambda:output_file())
+b3.grid(column=0, row=3)
+
+
+def upload_file():
+    global tkImage
+    global b2
+    global globalimage
+    global frame
+
+    filename = filedialog.askopenfilename(filetypes=[("Image file", ".jpg .png")])
+
+    image=Image.open(filename)
+    img=image.resize((256, 256))
+    tkImage = ImageTk.PhotoImage(img)
     
-    # Remove outliner eyes
-    eye_y = np.array(eye_y)
-    eye_y = reject_outliers(eye_y)
-    print(f"EYE Y: {eye_y}")
-    eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
+    img = cv2.imread(filename)
+    globalimage.append(img)
+    frame = Frame(window, width=900, height=600)
+    frame.grid(column=0, row=7)
+    # frame.place(anchor='center', relx=0  , rely=)
+    b2 = tk.Button(window, image=tkImage, anchor="center")
+    #b2.grid(row=3,column=0)
+    b2.grid(column=0, row=5)
+
+def output_file():
+
+    global b4
+
+    images = globalimage
+    labels_dict={0:'without mask',1:'mask'}
+    color_dict={0:(0,0,255),1:(0,255,0)}
+    size = 4
+    #classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+
+    image = images[0]
+    print(image.shape)
+    # cv2.imshow("Input",imagePath)
+    inter = cv2.INTER_AREA
+    height = 256
+    dim = None
+    (h, w) = image.shape[:2]
+    r = height / float(h)
+    dim = (int(w * r), height)
+    image = cv2.resize(image, dim, interpolation = inter)
+
+    # image = cv2.resize(image, (512,512), interpolation = inter)
+
+    # cv2.imwrite("OUTPUT/image.png",image)
+    # image = cv2.resize(image, (image.shape[1] // size, image.shape[0] // size)) # make a smaller image
+    print(image.shape)
+    # detect MultiScale / faces
+    # faces = classifier.detectMultiScale(mini)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    #cv2.imshow("Input", image)
+    cropped_image, cropped_gray, eye_y = facial_Feature(image, gray)
+    if len(eye_y) > 0:
+        
+        # Remove outliner eyes
+        eye_y = np.array(eye_y)
+        eye_y = reject_outliers(eye_y)
+        print(f"EYE Y: {eye_y}")
+        eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
+        
+    else:
+        print("NO EYES")
+        eye_avg = int( cropped_image.shape[0]/2) + 10
+    global tkImage2
+
+
+    global imagelist
+    imagelist = []
     
-else:
-    print("NO EYES")
-    eye_avg = int( cropped_image.shape[0]/2) + 10
-final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg)
-cv2.imshow("TESR", cropped_image)
-mask_img=mask_Creator(final_Lines, cropped_image)
-# cv2.imshow("Image", cropped_image)
-cv2.imshow("Mask", mask_img)
-# cv2.imwrite("OUTPUT/mask.png", mask_img)
-# res = cv2.bitwise_or(cropped_image,cropped_image,mask = mask_img)
-dst = cv2.addWeighted(cropped_image,1,mask_img,1,0)
-cv2.imshow("Combined", dst)
-# # NEW  CODE FOR OUTPUT GENERATION
-if mask_img is not None:
-    output_Creator(cropped_image, mask_img)
-else:
-    print("NO MASK")
-cv2.waitKey(0)
-       
+    for x in range(5):
+        y = x +3
+        minlength = 9-y
+        if minlength >= 0:
+            minlength = 1
+        final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg,32-y , minlength, 2+y )
+        mask_img=mask_Creator(final_Lines, cropped_image)
+
+        
+
+        image2=(output_Creator(cropped_image, mask_img))
+
+
+        # img2=image2.resize((256, 256))
+        # image2.show()
+        tkImage2 = ImageTk.PhotoImage(image2)
+        b4 = tk.Button(frame, image=tkImage2)
+        b4.grid(column=x + 1, row=7)
+        imagelist.append(tkImage2)
+        # Create an object of tkinter ImageTk
+
+
+
+        z = 1
+        if x % 2 == 0:
+            z = -1
+        final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg - x, 32-y,minlength , 2+y )
+        mask_img=mask_Creator(final_Lines, cropped_image)
+        image2=(output_Creator(cropped_image, mask_img))
+        # img2=image2.resize((256, 256))
+        tkImage2 = ImageTk.PhotoImage(image2)
+        b4 = tk.Button(frame, image=tkImage2)
+        b4.grid(column=x + 1, row=8)
+        imagelist.append(tkImage2)
+
+
+   
+                                  
+    
+    #b2.grid(row=3,column=0)
+    
+
+    b5 = tk.Button(window, text='Upload File', width=20,command = lambda:reset())
+
+
+def reset():
+    b2.after(0, b2.destroy())
+    b4.after(0, b4.destroy())
+    frame.destroy()
+    globalimage.clear()
+
+b5 = tk.Button(window,height=1,width=10, text="Clear",command=reset)
+b5.grid(column=0, row=4)
+
+
+window.mainloop()
