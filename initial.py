@@ -11,7 +11,7 @@ import skimage
 import tensorflow as tf
 import torchvision.transforms as T
 import torch
-
+import random
 
 import tkinter as tk
 import tk_tools
@@ -46,7 +46,8 @@ def facial_Feature(image, gray):
     for (ex,ey,ew,eh) in eyes:
             eye_y.append(ey + (eh/2) )
 
-       
+            # cv2.rectangle(roi_color,(ex,ey),(ex+ew,ey+eh),(0,255,0),2)
+    # cv2.imshow("eyes",roi_color )
     return roi_color, roi_gray, eye_y
 
 #imports images and resizes them to a standard size
@@ -76,8 +77,10 @@ def line_Getter(img, gray, eye_avg, threshold, minLine, maxGap):
     if len(lines) != 0: 
         for line in lines: 
             x1, y1, x2, y2 = line[0]
-            if(y1 >= eye_avg and y2 >= eye_avg  and x1 > 0 + 50 and x2 > 0 + 50  and x1 < w - 50 and x2 < w - 50 ): # only show lines under eyes
+            if(y1 >= eye_avg and y2 >= eye_avg ): # only show lines under eyes
+                # img = cv2.line(img,(x1,y1), (x2,y2), color=(255,0,0),thickness=3)
                 final_Lines.append(line[0])
+        # cv2.imshow("Lines" +str(random.randint(0,1000)),img)
     return final_Lines
 
 
@@ -263,26 +266,29 @@ def output_file():
         eye_y = np.array(eye_y)
         eye_y = reject_outliers(eye_y)
         print(f"EYE Y: {eye_y}")
+        
         eye_avg = (sum(eye_y)/len(eye_y)) + 22 # get average of eyes and look just below
+        # cropped_image= cv2.circle(cropped_image, (int(130),int(eye_avg-22)), radius=10, color=(0,0,255), thickness=-1)
         
     else:
         print("NO EYES")
         eye_avg = int( cropped_image.shape[0]/2) + 10
     global tkImage2
-
+    # cv2.imshow("Center",cropped_image)
 
     global imagelist
     imagelist = []
     
     for x in range(5):
-        y = x +3
+        y = x + x*2
         minlength = 9-y
         if minlength >= 0:
             minlength = 1
         final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg,32-y , minlength, 2+y )
         mask_img=mask_Creator(final_Lines, cropped_image)
 
-        
+        # dst = cv2.bitwise_or(cropped_image, mask_img)
+        # cv2.imshow("combined" + str(random.randint(0,1000)),dst)
 
         image2=(output_Creator(cropped_image, mask_img))
 
@@ -300,8 +306,10 @@ def output_file():
         z = 1
         if x % 2 == 0:
             z = -1
-        final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg - x, 32-y,minlength , 2+y )
+        final_Lines= line_Getter(cropped_image, cropped_gray, eye_avg + (x*z), 32-y,minlength , 2+y )
         mask_img=mask_Creator(final_Lines, cropped_image)
+        # dst = cv2.bitwise_or(cropped_image, mask_img)
+        # cv2.imshow("combined" + str(random.randint(0,1000)),dst)
         image2=(output_Creator(cropped_image, mask_img))
         # img2=image2.resize((256, 256))
         tkImage2 = ImageTk.PhotoImage(image2)
